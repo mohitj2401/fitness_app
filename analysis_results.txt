@@ -1,0 +1,16 @@
+Analyzing fitness_pass_app...                                   
+
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:173:25 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:174:25 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:182:25 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:183:25 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:191:25 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\features\dashboard\dashboard_screen.dart:192:25 - deprecated_member_use
+warning - Unused import: 'dart:convert' - lib\features\yoga\data\yoga_storage_service.dart:3:8 - unused_import
+  error - Target of URI doesn't exist: '../../data/yoga_storage_service.dart' - lib\features\yoga\presentation\yoga_screen.dart:3:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../models/yoga_session_model.dart' - lib\features\yoga\presentation\yoga_screen.dart:4:8 - uri_does_not_exist
+  error - Undefined class 'YogaStorageService' - lib\features\yoga\presentation\yoga_screen.dart:15:9 - undefined_class
+  error - The method 'YogaStorageService' isn't defined for the type '_YogaScreenState' - lib\features\yoga\presentation\yoga_screen.dart:15:46 - undefined_method
+  error - The name 'YogaSessionModel' isn't a type, so it can't be used as a type argument - lib\features\yoga\presentation\yoga_screen.dart:16:8 - non_type_as_type_argument
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\yoga\presentation\yoga_session_screen.dart:2:8 - unnecessary_import
+

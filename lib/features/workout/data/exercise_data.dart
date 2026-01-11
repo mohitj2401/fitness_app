@@ -1,0 +1,336 @@
+import 'package:flutter/material.dart';
+import '../models/exercise_model.dart';
+
+class ExerciseData {
+  static final List<Exercise> allExercises = [
+    // CHEST EXERCISES
+    Exercise(
+      id: 'chest_1',
+      name: 'Barbell Bench Press',
+      category: ExerciseCategory.chest,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Chest', 'Triceps', 'Shoulders'],
+      description:
+          'The king of chest exercises. Builds overall chest mass and strength.',
+      instructions: [
+        'Lie flat on bench with feet on floor',
+        'Grip bar slightly wider than shoulder width',
+        'Lower bar to mid-chest with control',
+        'Press bar up explosively',
+        'Keep shoulder blades retracted throughout',
+      ],
+      icon: Icons.fitness_center,
+      color: Colors.red,
+    ),
+    Exercise(
+      id: 'chest_2',
+      name: 'Push-Ups',
+      category: ExerciseCategory.chest,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Chest', 'Triceps', 'Core'],
+      description:
+          'Classic bodyweight exercise for chest, arms, and core strength.',
+      instructions: [
+        'Start in plank position, hands shoulder-width apart',
+        'Keep body in straight line from head to heels',
+        'Lower chest to floor, elbows at 45 degrees',
+        'Push back up to starting position',
+        'Maintain core engagement throughout',
+      ],
+      icon: Icons.accessibility_new,
+      color: Colors.red,
+    ),
+    Exercise(
+      id: 'chest_3',
+      name: 'Dumbbell Flyes',
+      category: ExerciseCategory.chest,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Chest', 'Shoulders'],
+      description: 'Isolation exercise for chest development and stretch.',
+      instructions: [
+        'Lie on bench with dumbbells above chest',
+        'Slight bend in elbows',
+        'Lower weights in arc motion to sides',
+        'Feel stretch in chest',
+        'Bring weights back together at top',
+      ],
+      icon: Icons.airline_seat_recline_extra,
+      color: Colors.red,
+    ),
+
+    // BACK EXERCISES
+    Exercise(
+      id: 'back_1',
+      name: 'Pull-Ups',
+      category: ExerciseCategory.back,
+      difficulty: DifficultyLevel.advanced,
+      muscleGroups: ['Lats', 'Biceps', 'Upper Back'],
+      description:
+          'Ultimate bodyweight back builder. Develops width and strength.',
+      instructions: [
+        'Hang from bar with overhand grip',
+        'Pull yourself up until chin over bar',
+        'Lead with chest, not chin',
+        'Lower with control',
+        'Full extension at bottom',
+      ],
+      icon: Icons.height,
+      color: Colors.blue,
+    ),
+    Exercise(
+      id: 'back_2',
+      name: 'Barbell Rows',
+      category: ExerciseCategory.back,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Lats', 'Rhomboids', 'Lower Back'],
+      description: 'Compound movement for back thickness and strength.',
+      instructions: [
+        'Bend at hips, back straight',
+        'Grip bar shoulder-width apart',
+        'Pull bar to lower chest/upper abs',
+        'Squeeze shoulder blades together',
+        'Lower with control',
+      ],
+      icon: Icons.fitness_center,
+      color: Colors.blue,
+    ),
+    Exercise(
+      id: 'back_3',
+      name: 'Deadlifts',
+      category: ExerciseCategory.back,
+      difficulty: DifficultyLevel.advanced,
+      muscleGroups: ['Lower Back', 'Glutes', 'Hamstrings', 'Traps'],
+      description: 'The ultimate full-body strength builder.',
+      instructions: [
+        'Stand with feet hip-width, bar over mid-foot',
+        'Bend down and grip bar',
+        'Keep back straight, chest up',
+        'Drive through heels, extend hips',
+        'Stand tall, shoulders back',
+      ],
+      icon: Icons.trending_up,
+      color: Colors.blue,
+    ),
+
+    // LEG EXERCISES
+    Exercise(
+      id: 'legs_1',
+      name: 'Barbell Squats',
+      category: ExerciseCategory.legs,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Quads', 'Glutes', 'Hamstrings', 'Core'],
+      description:
+          'The king of leg exercises. Builds overall leg mass and strength.',
+      instructions: [
+        'Bar on upper back, feet shoulder-width',
+        'Chest up, core tight',
+        'Descend by bending knees and hips',
+        'Go to parallel or below',
+        'Drive through heels to stand',
+      ],
+      icon: Icons.fitness_center,
+      color: Colors.green,
+    ),
+    Exercise(
+      id: 'legs_2',
+      name: 'Lunges',
+      category: ExerciseCategory.legs,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Quads', 'Glutes', 'Hamstrings'],
+      description: 'Unilateral leg exercise for balance and strength.',
+      instructions: [
+        'Stand tall, feet hip-width apart',
+        'Step forward with one leg',
+        'Lower back knee toward floor',
+        'Front thigh parallel to ground',
+        'Push back to starting position',
+      ],
+      icon: Icons.directions_walk,
+      color: Colors.green,
+    ),
+    Exercise(
+      id: 'legs_3',
+      name: 'Leg Press',
+      category: ExerciseCategory.legs,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Quads', 'Glutes', 'Hamstrings'],
+      description: 'Machine-based leg builder, great for volume.',
+      instructions: [
+        'Sit in machine, feet on platform',
+        'Release safety, lower platform',
+        'Knees to 90 degrees',
+        'Press through heels',
+        'Don\'t lock knees at top',
+      ],
+      icon: Icons.airline_seat_legroom_extra,
+      color: Colors.green,
+    ),
+
+    // SHOULDER EXERCISES
+    Exercise(
+      id: 'shoulders_1',
+      name: 'Overhead Press',
+      category: ExerciseCategory.shoulders,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Shoulders', 'Triceps', 'Upper Chest'],
+      description: 'Best overall shoulder mass builder.',
+      instructions: [
+        'Stand with bar at shoulder height',
+        'Grip slightly wider than shoulders',
+        'Press bar overhead',
+        'Lock out arms at top',
+        'Lower with control',
+      ],
+      icon: Icons.arrow_upward,
+      color: Colors.orange,
+    ),
+    Exercise(
+      id: 'shoulders_2',
+      name: 'Lateral Raises',
+      category: ExerciseCategory.shoulders,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Side Delts'],
+      description: 'Isolation for shoulder width.',
+      instructions: [
+        'Stand with dumbbells at sides',
+        'Slight bend in elbows',
+        'Raise arms to shoulder height',
+        'Lead with elbows, not hands',
+        'Lower with control',
+      ],
+      icon: Icons.open_in_full,
+      color: Colors.orange,
+    ),
+    Exercise(
+      id: 'shoulders_3',
+      name: 'Front Raises',
+      category: ExerciseCategory.shoulders,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Front Delts'],
+      description: 'Targets front shoulder muscles.',
+      instructions: [
+        'Hold dumbbells in front of thighs',
+        'Raise one arm forward',
+        'Lift to shoulder height',
+        'Lower with control',
+        'Alternate arms',
+      ],
+      icon: Icons.arrow_forward,
+      color: Colors.orange,
+    ),
+
+    // ARM EXERCISES
+    Exercise(
+      id: 'arms_1',
+      name: 'Barbell Curls',
+      category: ExerciseCategory.arms,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Biceps'],
+      description: 'Classic bicep mass builder.',
+      instructions: [
+        'Stand with bar at arm\'s length',
+        'Grip shoulder-width, palms up',
+        'Curl bar to shoulders',
+        'Keep elbows stationary',
+        'Lower with control',
+      ],
+      icon: Icons.fitness_center,
+      color: Colors.purple,
+    ),
+    Exercise(
+      id: 'arms_2',
+      name: 'Tricep Dips',
+      category: ExerciseCategory.arms,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Triceps', 'Chest', 'Shoulders'],
+      description: 'Bodyweight exercise for tricep development.',
+      instructions: [
+        'Grip parallel bars or bench',
+        'Lower body by bending elbows',
+        'Go until upper arms parallel',
+        'Press back up',
+        'Keep core tight',
+      ],
+      icon: Icons.trending_down,
+      color: Colors.purple,
+    ),
+    Exercise(
+      id: 'arms_3',
+      name: 'Hammer Curls',
+      category: ExerciseCategory.arms,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Biceps', 'Forearms'],
+      description: 'Builds bicep thickness and forearm strength.',
+      instructions: [
+        'Hold dumbbells with neutral grip',
+        'Curl weights to shoulders',
+        'Keep palms facing each other',
+        'Control the movement',
+        'Lower slowly',
+      ],
+      icon: Icons.build,
+      color: Colors.purple,
+    ),
+
+    // CORE EXERCISES
+    Exercise(
+      id: 'core_1',
+      name: 'Plank',
+      category: ExerciseCategory.core,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Abs', 'Core', 'Lower Back'],
+      description: 'Isometric core strengthener.',
+      instructions: [
+        'Forearms on ground, elbows under shoulders',
+        'Body in straight line',
+        'Engage core and glutes',
+        'Hold position',
+        'Don\'t let hips sag',
+      ],
+      icon: Icons.album,
+      color: Colors.teal,
+    ),
+    Exercise(
+      id: 'core_2',
+      name: 'Crunches',
+      category: ExerciseCategory.core,
+      difficulty: DifficultyLevel.beginner,
+      muscleGroups: ['Abs'],
+      description: 'Classic ab exercise.',
+      instructions: [
+        'Lie on back, knees bent',
+        'Hands behind head',
+        'Lift shoulders off ground',
+        'Contract abs',
+        'Lower with control',
+      ],
+      icon: Icons.airline_seat_recline_normal,
+      color: Colors.teal,
+    ),
+    Exercise(
+      id: 'core_3',
+      name: 'Russian Twists',
+      category: ExerciseCategory.core,
+      difficulty: DifficultyLevel.intermediate,
+      muscleGroups: ['Obliques', 'Abs'],
+      description: 'Rotational core exercise for obliques.',
+      instructions: [
+        'Sit with knees bent, feet off floor',
+        'Lean back slightly',
+        'Hold weight at chest',
+        'Rotate torso side to side',
+        'Touch weight to floor each side',
+      ],
+      icon: Icons.threesixty,
+      color: Colors.teal,
+    ),
+  ];
+
+  static List<Exercise> getExercisesByCategory(ExerciseCategory category) {
+    return allExercises.where((e) => e.category == category).toList();
+  }
+
+  static List<Exercise> getExercisesByDifficulty(DifficultyLevel difficulty) {
+    return allExercises.where((e) => e.difficulty == difficulty).toList();
+  }
+}
