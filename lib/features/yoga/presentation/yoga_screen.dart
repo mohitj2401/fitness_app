@@ -1,4 +1,4 @@
-import '../data/yoga_storage_service.dart';
+import '../data/yoga_db_helper.dart';
 import '../models/yoga_session_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,7 +13,6 @@ class YogaScreen extends StatefulWidget {
 }
 
 class _YogaScreenState extends State<YogaScreen> {
-  final YogaStorageService _storageService = YogaStorageService();
   List<YogaSessionModel> _sessions = [];
   bool _isLoading = true;
 
@@ -25,11 +24,13 @@ class _YogaScreenState extends State<YogaScreen> {
 
   Future<void> _loadHistory() async {
     setState(() => _isLoading = true);
-    final sessions = await _storageService.getSessions();
-    setState(() {
-      _sessions = sessions;
-      _isLoading = false;
-    });
+    final sessions = await YogaDatabaseHelper.instance.getAllSessions();
+    if (mounted) {
+      setState(() {
+        _sessions = sessions;
+        _isLoading = false;
+      });
+    }
   }
 
   @override

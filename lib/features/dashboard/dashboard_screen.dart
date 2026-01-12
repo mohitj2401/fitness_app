@@ -7,6 +7,8 @@ import '../workout/presentation/workout_screen.dart';
 import '../workout/presentation/workout_history_screen.dart';
 import '../workout/data/workout_db_helper.dart';
 import '../workout/models/workout_log_model.dart';
+import '../yoga/data/yoga_db_helper.dart';
+import '../yoga/models/yoga_session_model.dart';
 import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -74,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _totalMinutes = 0;
   int _caloriesBurned = 0;
   WorkoutSession? _lastWorkout;
+  YogaSessionModel? _lastYoga;
   bool _isLoading = true;
 
   @override
@@ -86,7 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final count = await WorkoutDatabaseHelper.instance.getWorkoutCount();
     final totalSeconds = await WorkoutDatabaseHelper.instance
         .getTotalDuration();
-    final last = await WorkoutDatabaseHelper.instance.getLastWorkout();
+    final lastWorkout = await WorkoutDatabaseHelper.instance.getLastWorkout();
+
+    // Fetch last yoga session
+    final yogaSessions = await YogaDatabaseHelper.instance.getAllSessions();
+    final lastYoga = yogaSessions.isNotEmpty ? yogaSessions.first : null;
 
     if (mounted) {
       setState(() {
@@ -94,7 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _totalMinutes = totalSeconds ~/ 60;
         // Simple calorie estimation: ~5 cal per minute of exercise
         _caloriesBurned = _totalMinutes * 5;
-        _lastWorkout = last;
+        _lastWorkout = lastWorkout;
+        _lastYoga = lastYoga;
         _isLoading = false;
       });
     }
@@ -291,6 +299,12 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: LinearGradient(
             colors: [Colors.blue.shade400, Colors.blue.shade600],
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const YogaScreen()),
+            );
+          },
         ),
         _buildActionCard(
           context,
@@ -343,12 +357,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRecentActivity(BuildContext context) {
-    if (_lastWorkout == null) {
+    if (_lastWorkout == null && _lastYoga == null) {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text("No recent activity. Start a workout!"),
         ),
+      );
+    }
+
+    // Determine which activity is more recent
+    bool showYoga = false;
+    if (_lastYoga != null) {
+      if (_lastWorkout == null) {
+        showYoga = true;
+      } else if (_lastYoga!.timestamp.isAfter(_lastWorkout!.startTime)) {
+        showYoga = true;
+      }
+    }
+
+    if (showYoga) {
+      return _buildActivityItem(
+        context,
+        icon: Icons.self_improvement,
+        title: _lastYoga!.title,
+        subtitle:
+            "${_lastYoga!.durationSeconds ~/ 60} mins • ${DateFormat.yMMMd().format(_lastYoga!.timestamp)}",
+        color: Colors.purple,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const YogaScreen()),
+          );
+        },
       );
     }
 

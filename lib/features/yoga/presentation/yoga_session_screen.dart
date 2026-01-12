@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
-import '../data/yoga_storage_service.dart';
+import '../data/yoga_db_helper.dart';
 import '../models/yoga_session_model.dart';
 
 class YogaSessionScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
   bool _isPlaying = false;
   int _durationSeconds = 0;
   Timer? _timer;
-  final YogaStorageService _storageService = YogaStorageService();
+  // Removed YogaStorageService
 
   @override
   void dispose() {
@@ -79,7 +79,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
         timestamp: DateTime.now(),
       );
 
-      await _storageService.saveSession(session);
+      await YogaDatabaseHelper.instance.createSession(session);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../data/yoga_storage_service.dart';
+import '../data/yoga_db_helper.dart';
 import '../data/yoga_statistics.dart';
 import '../models/yoga_session_model.dart';
 
@@ -12,11 +12,9 @@ class YogaDailyReportScreen extends StatefulWidget {
 }
 
 class _YogaDailyReportScreenState extends State<YogaDailyReportScreen> {
-  final YogaStorageService _storageService = YogaStorageService();
   YogaStatistics? _statistics;
   List<YogaSessionModel> _sessions = [];
   bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -25,7 +23,7 @@ class _YogaDailyReportScreenState extends State<YogaDailyReportScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final sessions = await _storageService.getSessions();
+    final sessions = await YogaDatabaseHelper.instance.getAllSessions();
     setState(() {
       _sessions = sessions;
       _statistics = YogaStatistics.fromSessions(sessions);
