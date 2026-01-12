@@ -3,8 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_bloc.dart';
 import '../yoga/presentation/yoga_screen.dart';
-import '../booking/booking_screen.dart';
 import '../workout/presentation/workout_screen.dart';
+import '../workout/presentation/workout_history_screen.dart';
+import '../workout/data/workout_db_helper.dart';
+import '../workout/models/workout_log_model.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,41 +21,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const BookingScreen(),
     const YogaScreen(),
     const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month),
-            label: 'Book',
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: _screens[_currentIndex],
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.self_improvement_outlined),
+                selectedIcon: Icon(Icons.self_improvement),
+                label: 'Yoga',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person),
+                label: 'Account',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.self_improvement),
-            label: 'Yoga',
-          ),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _workoutCount = 0;
+  int _totalMinutes = 0;
+  int _caloriesBurned = 0;
+  WorkoutSession? _lastWorkout;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final count = await WorkoutDatabaseHelper.instance.getWorkoutCount();
+    final totalSeconds = await WorkoutDatabaseHelper.instance
+        .getTotalDuration();
+    final last = await WorkoutDatabaseHelper.instance.getLastWorkout();
+
+    if (mounted) {
+      setState(() {
+        _workoutCount = count;
+        _totalMinutes = totalSeconds ~/ 60;
+        // Simple calorie estimation: ~5 cal per minute of exercise
+        _caloriesBurned = _totalMinutes * 5;
+        _lastWorkout = last;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,33 +156,33 @@ class HomeScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Stats Cards
-                  _buildStatsSection(context),
-                  const SizedBox(height: 24),
-                  // Quick Actions
-                  Text(
-                    "Quick Actions",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Stats Cards
+                        _buildStatsSection(context),
+                        const SizedBox(height: 24),
+                        // Quick Actions
+                        Text(
+                          "Quick Actions",
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildQuickActions(context),
+                        const SizedBox(height: 24),
+                        // Recent Activity
+                        Text(
+                          "Recent Activity",
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildRecentActivity(context),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildQuickActions(context),
-                  const SizedBox(height: 24),
-                  // Recent Activity
-                  Text(
-                    "Recent Activity",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildRecentActivity(context),
-                ],
-              ),
             ),
           ),
         ],
@@ -152,7 +198,7 @@ class HomeScreen extends StatelessWidget {
             context,
             icon: Icons.fitness_center,
             label: "Workouts",
-            value: "12",
+            value: "$_workoutCount",
             color: Colors.orange,
           ),
         ),
@@ -162,7 +208,9 @@ class HomeScreen extends StatelessWidget {
             context,
             icon: Icons.local_fire_department,
             label: "Calories",
-            value: "2.4k",
+            value: _caloriesBurned > 999
+                ? "${(_caloriesBurned / 1000).toStringAsFixed(1)}k"
+                : "$_caloriesBurned",
             color: Colors.red,
           ),
         ),
@@ -170,10 +218,10 @@ class HomeScreen extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             context,
-            icon: Icons.emoji_events,
-            label: "Streak",
-            value: "7d",
-            color: Colors.amber,
+            icon: Icons.timer,
+            label: "Minutes",
+            value: "$_totalMinutes",
+            color: Colors.blue,
           ),
         ),
       ],
@@ -246,19 +294,17 @@ class HomeScreen extends StatelessWidget {
         ),
         _buildActionCard(
           context,
-          icon: Icons.calendar_today,
-          label: "Book Class",
-          gradient: LinearGradient(
-            colors: [Colors.green.shade400, Colors.green.shade600],
-          ),
-        ),
-        _buildActionCard(
-          context,
-          icon: Icons.insights,
-          label: "View Stats",
+          icon: Icons.history,
+          label: "Workout History",
           gradient: LinearGradient(
             colors: [Colors.orange.shade400, Colors.orange.shade600],
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
+            );
+          },
         ),
       ],
     );
@@ -297,30 +343,30 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecentActivity(BuildContext context) {
-    return Column(
-      children: [
-        _buildActivityItem(
-          context,
-          icon: Icons.self_improvement,
-          title: "Yoga Session",
-          subtitle: "15 minutes • Today",
-          color: Colors.purple,
+    if (_lastWorkout == null) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("No recent activity. Start a workout!"),
         ),
-        _buildActivityItem(
+      );
+    }
+
+    return _buildActivityItem(
+      context,
+      icon: Icons.fitness_center,
+      title: _lastWorkout!.name.isNotEmpty
+          ? _lastWorkout!.name
+          : "Workout Session",
+      subtitle:
+          "${_lastWorkout!.durationSeconds ~/ 60} mins • ${DateFormat.yMMMd().format(_lastWorkout!.startTime)}",
+      color: Colors.blue,
+      onTap: () {
+        Navigator.push(
           context,
-          icon: Icons.fitness_center,
-          title: "Strength Training",
-          subtitle: "45 minutes • Yesterday",
-          color: Colors.orange,
-        ),
-        _buildActivityItem(
-          context,
-          icon: Icons.directions_run,
-          title: "Morning Run",
-          subtitle: "30 minutes • 2 days ago",
-          color: Colors.blue,
-        ),
-      ],
+          MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
+        );
+      },
     );
   }
 
@@ -330,10 +376,12 @@ class HomeScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required Color color,
+    VoidCallback? onTap,
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color),
@@ -418,13 +466,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildSettingsCard(
-                    context,
-                    icon: Icons.history,
-                    title: "Payment History",
-                    subtitle: "View your transactions",
-                    onTap: () {},
-                  ),
+
                   _buildSettingsCard(
                     context,
                     icon: Icons.palette,

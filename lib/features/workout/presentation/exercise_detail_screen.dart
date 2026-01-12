@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/exercise_model.dart';
+import 'exercise_timer_screen.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   final Exercise exercise;
@@ -177,11 +178,11 @@ class ExerciseDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Start workout timer
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Starting ${exercise.name}...'),
-                            behavior: SnackBarBehavior.floating,
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ExerciseTimerScreen(exercise: exercise),
                           ),
                         );
                       },

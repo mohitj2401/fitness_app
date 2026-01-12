@@ -3,7 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/theme_bloc.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
 void main() {
+  if (Platform.isWindows || Platform.isLinux) {
+    // Initialize FFI
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(const FitnessApp());
 }
 
