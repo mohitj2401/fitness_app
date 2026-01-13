@@ -3,11 +3,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_bloc.dart';
 import '../yoga/presentation/yoga_screen.dart';
-import '../booking/booking_screen.dart';
 import '../workout/presentation/workout_screen.dart';
+import '../workout/presentation/workout_history_screen.dart';
+import '../achievements/presentation/achievements_screen.dart';
+import '../workout/data/workout_db_helper.dart';
+import '../workout/models/workout_log_model.dart';
+import '../yoga/data/yoga_db_helper.dart';
+import '../yoga/models/yoga_session_model.dart';
+import '../achievements/data/achievement_db_helper.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  // Global notifier to trigger stats refresh across all tabs
+  static final ValueNotifier<int> refreshNotifier = ValueNotifier<int>(0);
+
+  // Helper to trigger refresh
+  static void triggerRefresh() {
+    refreshNotifier.value++;
+  }
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -18,41 +33,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const BookingScreen(),
     const YogaScreen(),
     const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month),
-            label: 'Book',
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: _screens[_currentIndex],
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.self_improvement_outlined),
+                selectedIcon: Icon(Icons.self_improvement),
+                label: 'Yoga',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person),
+                label: 'Account',
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.self_improvement),
-            label: 'Yoga',
-          ),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _workoutCount = 0;
+  int _totalMinutes = 0;
+  int _caloriesBurned = 0;
+  WorkoutSession? _lastWorkout;
+  YogaSessionModel? _lastYoga;
+  int _achievementCount = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    DashboardScreen.refreshNotifier.addListener(_loadStats);
+  }
+
+  @override
+  void dispose() {
+    DashboardScreen.refreshNotifier.removeListener(_loadStats);
+    super.dispose();
+  }
+
+  Future<void> _loadStats() async {
+    // Gym stats
+    final gymCount = await WorkoutDatabaseHelper.instance.getWorkoutCount();
+    final gymSeconds = await WorkoutDatabaseHelper.instance.getTotalDuration();
+    final lastWorkout = await WorkoutDatabaseHelper.instance.getLastWorkout();
+
+    // Yoga stats
+    final yogaCount = await YogaDatabaseHelper.instance.getSessionCount();
+    final yogaSeconds = await YogaDatabaseHelper.instance.getTotalDuration();
+
+    // Fetch last yoga session
+    final yogaSessions = await YogaDatabaseHelper.instance.getAllSessions();
+    final lastYoga = yogaSessions.isNotEmpty ? yogaSessions.first : null;
+
+    // Achievement stats
+    final achievementCount = await AchievementDatabaseHelper.instance
+        .getUnlockedCount();
+
+    if (mounted) {
+      setState(() {
+        _workoutCount = gymCount + yogaCount;
+        _totalMinutes = (gymSeconds + yogaSeconds) ~/ 60;
+        _achievementCount = achievementCount;
+        // Simple calorie estimation: ~5 cal per minute of exercise
+        _caloriesBurned = _totalMinutes * 5;
+        _lastWorkout = lastWorkout;
+        _lastYoga = lastYoga;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,33 +191,33 @@ class HomeScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Stats Cards
-                  _buildStatsSection(context),
-                  const SizedBox(height: 24),
-                  // Quick Actions
-                  Text(
-                    "Quick Actions",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Stats Cards
+                        _buildStatsSection(context),
+                        const SizedBox(height: 24),
+                        // Quick Actions
+                        Text(
+                          "Quick Actions",
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildQuickActions(context),
+                        const SizedBox(height: 24),
+                        // Recent Activity
+                        Text(
+                          "Recent Activity",
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildRecentActivity(context),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildQuickActions(context),
-                  const SizedBox(height: 24),
-                  // Recent Activity
-                  Text(
-                    "Recent Activity",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildRecentActivity(context),
-                ],
-              ),
             ),
           ),
         ],
@@ -145,36 +226,43 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStatsSection(BuildContext context) {
-    return Row(
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.2,
       children: [
-        Expanded(
-          child: _buildStatCard(
-            context,
-            icon: Icons.fitness_center,
-            label: "Workouts",
-            value: "12",
-            color: Colors.orange,
-          ),
+        _buildStatCard(
+          context,
+          icon: Icons.fitness_center,
+          label: "Sessions",
+          value: "$_workoutCount",
+          color: Colors.orange,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            context,
-            icon: Icons.local_fire_department,
-            label: "Calories",
-            value: "2.4k",
-            color: Colors.red,
-          ),
+        _buildStatCard(
+          context,
+          icon: Icons.timer,
+          label: "Minutes",
+          value: "$_totalMinutes",
+          color: Colors.blue,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            context,
-            icon: Icons.emoji_events,
-            label: "Streak",
-            value: "7d",
-            color: Colors.amber,
-          ),
+        _buildStatCard(
+          context,
+          icon: Icons.local_fire_department,
+          label: "Calories",
+          value: _caloriesBurned > 999
+              ? "${(_caloriesBurned / 1000).toStringAsFixed(1)}k"
+              : "$_caloriesBurned",
+          color: Colors.red,
+        ),
+        _buildStatCard(
+          context,
+          icon: Icons.emoji_events,
+          label: "Badges",
+          value: "$_achievementCount",
+          color: Colors.purple,
         ),
       ],
     );
@@ -189,23 +277,30 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Icon(icon, color: color, size: 28),
             const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 2),
             Text(
               label,
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -243,22 +338,40 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             colors: [Colors.blue.shade400, Colors.blue.shade600],
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const YogaScreen()),
+            );
+          },
         ),
         _buildActionCard(
           context,
-          icon: Icons.calendar_today,
-          label: "Book Class",
-          gradient: LinearGradient(
-            colors: [Colors.green.shade400, Colors.green.shade600],
-          ),
-        ),
-        _buildActionCard(
-          context,
-          icon: Icons.insights,
-          label: "View Stats",
+          icon: Icons.history,
+          label: "Workout History",
           gradient: LinearGradient(
             colors: [Colors.orange.shade400, Colors.orange.shade600],
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
+            );
+          },
+        ),
+        _buildActionCard(
+          context,
+          icon: Icons.emoji_events,
+          label: "Achievements",
+          gradient: LinearGradient(
+            colors: [Colors.green.shade400, Colors.green.shade600],
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AchievementsScreen()),
+            );
+          },
         ),
       ],
     );
@@ -297,30 +410,57 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRecentActivity(BuildContext context) {
-    return Column(
-      children: [
-        _buildActivityItem(
-          context,
-          icon: Icons.self_improvement,
-          title: "Yoga Session",
-          subtitle: "15 minutes • Today",
-          color: Colors.purple,
+    if (_lastWorkout == null && _lastYoga == null) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text("No recent activity. Start a workout!"),
         ),
-        _buildActivityItem(
+      );
+    }
+
+    // Determine which activity is more recent
+    bool showYoga = false;
+    if (_lastYoga != null) {
+      if (_lastWorkout == null) {
+        showYoga = true;
+      } else if (_lastYoga!.timestamp.isAfter(_lastWorkout!.startTime)) {
+        showYoga = true;
+      }
+    }
+
+    if (showYoga) {
+      return _buildActivityItem(
+        context,
+        icon: Icons.self_improvement,
+        title: _lastYoga!.title,
+        subtitle:
+            "${_lastYoga!.durationSeconds ~/ 60} mins • ${DateFormat.yMMMd().format(_lastYoga!.timestamp)}",
+        color: Colors.purple,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const YogaScreen()),
+          );
+        },
+      );
+    }
+
+    return _buildActivityItem(
+      context,
+      icon: Icons.fitness_center,
+      title: _lastWorkout!.name.isNotEmpty
+          ? _lastWorkout!.name
+          : "Workout Session",
+      subtitle:
+          "${_lastWorkout!.durationSeconds ~/ 60} mins • ${DateFormat.yMMMd().format(_lastWorkout!.startTime)}",
+      color: Colors.blue,
+      onTap: () {
+        Navigator.push(
           context,
-          icon: Icons.fitness_center,
-          title: "Strength Training",
-          subtitle: "45 minutes • Yesterday",
-          color: Colors.orange,
-        ),
-        _buildActivityItem(
-          context,
-          icon: Icons.directions_run,
-          title: "Morning Run",
-          subtitle: "30 minutes • 2 days ago",
-          color: Colors.blue,
-        ),
-      ],
+          MaterialPageRoute(builder: (_) => const WorkoutHistoryScreen()),
+        );
+      },
     );
   }
 
@@ -330,10 +470,12 @@ class HomeScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required Color color,
+    VoidCallback? onTap,
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color),
@@ -346,8 +488,47 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _workoutCount = 0;
+  int _totalMinutes = 0;
+  int _achievementCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    DashboardScreen.refreshNotifier.addListener(_loadStats);
+  }
+
+  @override
+  void dispose() {
+    DashboardScreen.refreshNotifier.removeListener(_loadStats);
+    super.dispose();
+  }
+
+  Future<void> _loadStats() async {
+    final gymCount = await WorkoutDatabaseHelper.instance.getWorkoutCount();
+    final gymSeconds = await WorkoutDatabaseHelper.instance.getTotalDuration();
+    final yogaCount = await YogaDatabaseHelper.instance.getSessionCount();
+    final yogaSeconds = await YogaDatabaseHelper.instance.getTotalDuration();
+    final achievementCount = await AchievementDatabaseHelper.instance
+        .getUnlockedCount();
+
+    if (mounted) {
+      setState(() {
+        _workoutCount = gymCount + yogaCount;
+        _totalMinutes = (gymSeconds + yogaSeconds) ~/ 60;
+        _achievementCount = achievementCount;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -382,17 +563,18 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        "John Doe",
+                        "My Profile",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        "john.doe@example.com",
+                        "Member since ${DateFormat.yMMM().format(DateTime.now())}",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -412,7 +594,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildStatsOverview(context),
                   const SizedBox(height: 24),
                   Text(
-                    "Settings",
+                    "Profile",
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -420,11 +602,27 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildSettingsCard(
                     context,
-                    icon: Icons.history,
-                    title: "Payment History",
-                    subtitle: "View your transactions",
-                    onTap: () {},
+                    icon: Icons.emoji_events,
+                    title: "Achievements",
+                    subtitle: "View your earned badges",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AchievementsScreen(),
+                        ),
+                      );
+                    },
                   ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Settings",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   _buildSettingsCard(
                     context,
                     icon: Icons.palette,
@@ -461,6 +659,22 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: "Learn more about the app",
                     onTap: () {},
                   ),
+                  const SizedBox(height: 24),
+                  Text(
+                    "Account Actions",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    icon: Icons.delete_forever,
+                    title: "Reset All Data",
+                    subtitle: "Clear all sessions and achievements",
+                    onTap: () => _showResetConfirmation(context),
+                  ),
                 ],
               ),
             ),
@@ -470,91 +684,114 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showResetConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Reset All Data?"),
+        content: const Text(
+          "This will permanently delete all your workout history, yoga sessions, and achievements. This action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("CANCEL"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resetAllData();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("RESET EVERYTHING"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resetAllData() async {
+    await WorkoutDatabaseHelper.instance.clearAllData();
+    await YogaDatabaseHelper.instance.clearAllData();
+    await AchievementDatabaseHelper.instance.resetAchievements();
+
+    DashboardScreen.triggerRefresh();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("All data has been cleared.")),
+      );
+    }
+  }
+
   Widget _buildStatsOverview(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.fitness_center,
-                    color: Colors.purple,
-                    size: 32,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "24",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Sessions",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
+          child: _buildStatCard(
+            context,
+            icon: Icons.fitness_center,
+            label: "Sessions",
+            value: "$_workoutCount",
+            color: Colors.orange,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Icon(Icons.timer, color: Colors.blue, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    "12h",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Total Time",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
+          child: _buildStatCard(
+            context,
+            icon: Icons.timer,
+            label: "Minutes",
+            value: "$_totalMinutes",
+            color: Colors.blue,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    "8",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Achievements",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
+          child: _buildStatCard(
+            context,
+            icon: Icons.emoji_events,
+            label: "Badges",
+            value: "$_achievementCount",
+            color: Colors.purple,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

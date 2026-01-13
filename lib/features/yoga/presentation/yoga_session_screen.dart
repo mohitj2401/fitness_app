@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
-import '../data/yoga_storage_service.dart';
+import '../data/yoga_db_helper.dart';
 import '../models/yoga_session_model.dart';
+import '../../dashboard/dashboard_screen.dart';
+import '../../achievements/models/achievement_model.dart';
+import '../../achievements/logic/achievement_service.dart';
+import '../../achievements/presentation/achievement_unlock_dialog.dart';
 
 class YogaSessionScreen extends StatefulWidget {
   final String sessionTitle;
@@ -16,7 +20,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
   bool _isPlaying = false;
   int _durationSeconds = 0;
   Timer? _timer;
-  final YogaStorageService _storageService = YogaStorageService();
+  // Removed YogaStorageService
 
   @override
   void dispose() {
@@ -79,13 +83,33 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
         timestamp: DateTime.now(),
       );
 
-      await _storageService.saveSession(session);
+      await YogaDatabaseHelper.instance.createSession(session);
+
+      List<AchievementModel> newlyUnlocked = [];
+      // Check for achievements
+      try {
+        newlyUnlocked = await AchievementService().checkAndUnlockAchievements();
+      } catch (e) {
+        debugPrint("Error checking achievements: $e");
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Session saved successfully!")),
         );
-        Navigator.pop(context, true); // Return true to signal refresh needed
+
+        // Pop the session screen first to prevent accidental dialog dismissal
+        Navigator.pop(context, true);
+
+        // Refresh dashboard stats
+        DashboardScreen.triggerRefresh();
+
+        // Show celebrations on the root navigator (handled inside show)
+        if (newlyUnlocked.isNotEmpty) {
+          for (var achievement in newlyUnlocked) {
+            AchievementUnlockDialog.show(context, achievement);
+          }
+        }
       }
     } else if (mounted) {
       Navigator.pop(context);
@@ -96,9 +120,16 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.sessionTitle),
+        title: Text(
+          widget.sessionTitle,
+          style: TextStyle(
+            color: Colors.purple.shade900,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.purple.shade900),
       ),
       extendBodyBehindAppBar: true,
       body: Container(

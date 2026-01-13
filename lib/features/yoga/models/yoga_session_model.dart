@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class YogaSessionModel {
   final String id;
   final String title;
@@ -30,9 +28,4 @@ class YogaSessionModel {
       timestamp: DateTime.parse(map['timestamp']),
     );
   }
-
-  String toJson() => json.encode(toMap());
-
-  factory YogaSessionModel.fromJson(String source) =>
-      YogaSessionModel.fromMap(json.decode(source));
 }
