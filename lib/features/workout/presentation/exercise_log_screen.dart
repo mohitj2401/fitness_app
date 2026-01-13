@@ -125,18 +125,33 @@ class _ExerciseLogScreenState extends State<ExerciseLogScreen> {
         children: [
           // Header info
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[100],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.primaryContainer.withOpacity(0.1),
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.timer, color: Colors.blue),
+                Icon(
+                  Icons.timer,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   "Time: ${_formatDuration(widget.durationSeconds)}",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],

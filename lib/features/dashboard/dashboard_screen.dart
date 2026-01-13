@@ -86,10 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadStats() async {
-    final count = await WorkoutDatabaseHelper.instance.getWorkoutCount();
-    final totalSeconds = await WorkoutDatabaseHelper.instance
-        .getTotalDuration();
+    // Gym stats
+    final gymCount = await WorkoutDatabaseHelper.instance.getWorkoutCount();
+    final gymSeconds = await WorkoutDatabaseHelper.instance.getTotalDuration();
     final lastWorkout = await WorkoutDatabaseHelper.instance.getLastWorkout();
+
+    // Yoga stats
+    final yogaCount = await YogaDatabaseHelper.instance.getSessionCount();
+    final yogaSeconds = await YogaDatabaseHelper.instance.getTotalDuration();
 
     // Fetch last yoga session
     final yogaSessions = await YogaDatabaseHelper.instance.getAllSessions();
@@ -97,8 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (mounted) {
       setState(() {
-        _workoutCount = count;
-        _totalMinutes = totalSeconds ~/ 60;
+        _workoutCount = gymCount + yogaCount;
+        _totalMinutes = (gymSeconds + yogaSeconds) ~/ 60;
         // Simple calorie estimation: ~5 cal per minute of exercise
         _caloriesBurned = _totalMinutes * 5;
         _lastWorkout = lastWorkout;

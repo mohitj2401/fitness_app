@@ -98,11 +98,14 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
       appBar: AppBar(
         title: Text(
           widget.sessionTitle,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.purple.shade900,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.purple.shade900),
       ),
       extendBodyBehindAppBar: true,
       body: Container(

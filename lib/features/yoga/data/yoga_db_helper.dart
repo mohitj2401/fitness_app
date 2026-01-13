@@ -53,6 +53,22 @@ CREATE TABLE yoga_sessions (
     return result.map((json) => YogaSessionModel.fromMap(json)).toList();
   }
 
+  Future<int> getSessionCount() async {
+    final db = await database;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM yoga_sessions'),
+    );
+    return count ?? 0;
+  }
+
+  Future<int> getTotalDuration() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT SUM(durationSeconds) as total FROM yoga_sessions',
+    );
+    return result.first['total'] as int? ?? 0;
+  }
+
   Future<void> close() async {
     final db = await instance.database;
     db.close();
