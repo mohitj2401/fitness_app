@@ -96,9 +96,13 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.sessionTitle),
+        title: Text(
+          widget.sessionTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       extendBodyBehindAppBar: true,
       body: Container(
