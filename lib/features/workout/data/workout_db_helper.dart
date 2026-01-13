@@ -160,6 +160,12 @@ CREATE TABLE workout_sets (
     return null;
   }
 
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('workout_sessions');
+    await db.delete('workout_sets');
+  }
+
   Future<void> close() async {
     final db = await instance.database;
     db.close();

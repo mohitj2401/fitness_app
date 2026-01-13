@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:uuid/uuid.dart';
 import '../data/yoga_db_helper.dart';
 import '../models/yoga_session_model.dart';
+import '../../dashboard/dashboard_screen.dart';
+import '../../achievements/models/achievement_model.dart';
+import '../../achievements/logic/achievement_service.dart';
+import '../../achievements/presentation/achievement_unlock_dialog.dart';
 
 class YogaSessionScreen extends StatefulWidget {
   final String sessionTitle;
@@ -81,11 +85,31 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
 
       await YogaDatabaseHelper.instance.createSession(session);
 
+      List<AchievementModel> newlyUnlocked = [];
+      // Check for achievements
+      try {
+        newlyUnlocked = await AchievementService().checkAndUnlockAchievements();
+      } catch (e) {
+        debugPrint("Error checking achievements: $e");
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Session saved successfully!")),
         );
-        Navigator.pop(context, true); // Return true to signal refresh needed
+
+        // Pop the session screen first to prevent accidental dialog dismissal
+        Navigator.pop(context, true);
+
+        // Refresh dashboard stats
+        DashboardScreen.triggerRefresh();
+
+        // Show celebrations on the root navigator (handled inside show)
+        if (newlyUnlocked.isNotEmpty) {
+          for (var achievement in newlyUnlocked) {
+            AchievementUnlockDialog.show(context, achievement);
+          }
+        }
       }
     } else if (mounted) {
       Navigator.pop(context);

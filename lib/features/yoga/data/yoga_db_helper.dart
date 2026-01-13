@@ -69,6 +69,11 @@ CREATE TABLE yoga_sessions (
     return result.first['total'] as int? ?? 0;
   }
 
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('yoga_sessions');
+  }
+
   Future<void> close() async {
     final db = await instance.database;
     db.close();

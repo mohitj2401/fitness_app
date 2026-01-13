@@ -3,6 +3,10 @@ import '../models/exercise_model.dart';
 import '../models/workout_log_model.dart';
 import '../data/workout_db_helper.dart';
 import 'exercise_report_screen.dart';
+import '../../dashboard/dashboard_screen.dart';
+import '../../achievements/logic/achievement_service.dart';
+import '../../achievements/models/achievement_model.dart';
+import '../../achievements/presentation/achievement_unlock_dialog.dart';
 
 class ExerciseLogScreen extends StatefulWidget {
   final Exercise exercise;
@@ -91,13 +95,32 @@ class _ExerciseLogScreenState extends State<ExerciseLogScreen> {
       // 3. Save to DB
       await WorkoutDatabaseHelper.instance.createWorkoutSession(sessionToSave);
 
+      List<AchievementModel> netUnlocked = [];
+      // 4. Check for achievements
+      try {
+        netUnlocked = await AchievementService().checkAndUnlockAchievements();
+      } catch (e) {
+        debugPrint("Error checking achievements: $e");
+      }
+
       if (mounted) {
+        // Navigate to report screen first
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => ExerciseReportScreen(session: sessionToSave),
           ),
         );
+
+        // Refresh dashboard stats
+        DashboardScreen.triggerRefresh();
+
+        // Show celebrations on the root navigator (handled inside show)
+        if (netUnlocked.isNotEmpty) {
+          for (var achievement in netUnlocked) {
+            AchievementUnlockDialog.show(context, achievement);
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
