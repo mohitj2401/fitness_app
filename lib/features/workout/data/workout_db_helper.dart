@@ -1,7 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/workout_log_model.dart';
-import 'dart:convert';
 
 class WorkoutDatabaseHelper {
   static final WorkoutDatabaseHelper instance = WorkoutDatabaseHelper._init();
@@ -30,7 +29,7 @@ class WorkoutDatabaseHelper {
 
     // Workout Sessions Table
     await db.execute('''
-CREATE TABLE workout_sessions (
+CREATE TABLE IF NOT EXISTS workout_sessions (
   id $idType,
   startTime $textType,
   endTime $textType,
@@ -43,7 +42,7 @@ CREATE TABLE workout_sessions (
     // Workout Sets Table
     // Stores individual sets for an exercise within a session
     await db.execute('''
-CREATE TABLE workout_sets (
+CREATE TABLE IF NOT EXISTS workout_sets (
   id $idType,
   sessionId $textType,
   exerciseId $textType,
@@ -133,6 +132,16 @@ CREATE TABLE workout_sets (
     final db = await database;
     final result = await db.rawQuery(
       'SELECT COUNT(*) as count FROM workout_sessions',
+    );
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<int> getSessionsCountAfter(DateTime date) async {
+    final db = await database;
+    final dateString = date.toIso8601String().substring(0, 10);
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM workout_sessions WHERE startTime >= ?',
+      [dateString],
     );
     return Sqflite.firstIntValue(result) ?? 0;
   }

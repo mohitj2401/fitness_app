@@ -1,7 +1,9 @@
-import 'package:fitness_pass_app/features/workout/data/workout_db_helper.dart';
-import 'package:fitness_pass_app/features/workout/models/workout_log_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../models/workout_log_model.dart';
+import '../data/workout_db_helper.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
 
 class WorkoutHistoryScreen extends StatefulWidget {
   const WorkoutHistoryScreen({super.key});
@@ -36,58 +38,153 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Workout History")),
-      body: FutureBuilder<List<WorkoutSession>>(
-        future: _historyFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      backgroundColor: Colors.black,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: true,
+            pinned: true,
+            backgroundColor: Colors.black,
+            surfaceTintColor: Colors.transparent,
+            title: const Text(
+              "History",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: FutureBuilder<List<WorkoutSession>>(
+              future: _historyFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ));
+                }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                }
 
-          final sessions = snapshot.data ?? [];
-
-          if (sessions.isEmpty) {
-            return const Center(child: Text("No workouts logged yet."));
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: sessions.length,
-            itemBuilder: (context, index) {
-              final session = sessions[index];
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ExpansionTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.purple,
-                    child: Icon(Icons.fitness_center, color: Colors.white),
-                  ),
-                  title: Text(
-                    DateFormat.yMMMd().add_jm().format(session.startTime),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    "${_formatDuration(session.durationSeconds)} • ${session.sets.length} sets",
-                  ),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _buildSessionDetails(session),
-                      ),
+                final sessions = snapshot.data ?? [];
+                if (sessions.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(64.0),
+                      child: Text("No workouts logged yet.", style: TextStyle(color: Colors.grey)),
                     ),
+                  );
+                }
+
+                final grouped = _groupSessions(sessions);
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  itemCount: grouped.keys.length,
+                  itemBuilder: (context, i) {
+                    final groupName = grouped.keys.elementAt(i);
+                    final groupSessions = grouped[groupName]!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            groupName.toUpperCase(),
+                            style: TextStyle(
+                              color: AppThemes.accentPurple.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ),
+                        ...groupSessions.map((session) => _buildHistoryCard(session)),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, List<WorkoutSession>> _groupSessions(List<WorkoutSession> sessions) {
+    final Map<String, List<WorkoutSession>> grouped = {};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    for (var session in sessions) {
+      final sessionDate = DateTime(session.startTime.year, session.startTime.month, session.startTime.day);
+      String group;
+      if (sessionDate == today) {
+        group = "Today";
+      } else if (sessionDate == yesterday) {
+        group = "Yesterday";
+      } else {
+        group = DateFormat('MMMM d').format(sessionDate);
+      }
+
+      if (grouped[group] == null) grouped[group] = [];
+      grouped[group]!.add(session);
+    }
+    return grouped;
+  }
+
+  Widget _buildHistoryCard(WorkoutSession session) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GlassCard(
+        padding: EdgeInsets.zero,
+        borderRadius: 24,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppThemes.accentPurple.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.history_rounded, color: AppThemes.accentPurple, size: 20),
+            ),
+            title: Text(
+              DateFormat.jm().format(session.startTime),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            subtitle: Text(
+              "${_formatDuration(session.durationSeconds)} • ${session.sets.length} items",
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13),
+            ),
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(color: Colors.white.withValues(alpha: 0.1)),
+                    const SizedBox(height: 12),
+                    ..._buildSessionDetails(session),
                   ],
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -104,48 +201,54 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
 
     return setsByExercise.entries.map((entry) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 12.0),
+        padding: const EdgeInsets.only(bottom: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              entry.key,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blueAccent,
-              ),
-            ),
-            const SizedBox(height: 4),
             Row(
               children: [
-                ...entry.value
-                    .map(
-                      (set) => Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Chip(
-                          label: Text(
-                            "${set.weight}kg x ${set.reps}",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                          ),
-                          visualDensity: VisualDensity.compact,
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor:
-                              Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]
-                              : Colors.grey[100],
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppThemes.accentPurple,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  entry.key,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: entry.value
+                  .map(
+                    (set) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                      ),
+                      child: Text(
+                        "${set.weight}kg x ${set.reps}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
                       ),
-                    )
-                    .toList(),
-              ],
+                    ),
+                  )
+                  .toList(),
             ),
           ],
         ),

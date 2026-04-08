@@ -27,7 +27,7 @@ class YogaDatabaseHelper {
     const integerType = 'INTEGER NOT NULL';
 
     await db.execute('''
-CREATE TABLE yoga_sessions (
+CREATE TABLE IF NOT EXISTS yoga_sessions (
   id $idType,
   title $textType,
   durationSeconds $integerType,
@@ -57,6 +57,18 @@ CREATE TABLE yoga_sessions (
     final db = await database;
     final count = Sqflite.firstIntValue(
       await db.rawQuery('SELECT COUNT(*) FROM yoga_sessions'),
+    );
+    return count ?? 0;
+  }
+
+  Future<int> getSessionsCountAfter(DateTime date) async {
+    final db = await database;
+    final dateString = date.toIso8601String().substring(0, 10);
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM yoga_sessions WHERE timestamp >= ?',
+        [dateString],
+      ),
     );
     return count ?? 0;
   }

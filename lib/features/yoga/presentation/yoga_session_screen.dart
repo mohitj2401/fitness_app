@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:ui';
 import 'package:uuid/uuid.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/glass_card.dart';
+import '../../../core/services/gamification_service.dart';
 import '../data/yoga_db_helper.dart';
 import '../models/yoga_session_model.dart';
 import '../../dashboard/dashboard_screen.dart';
@@ -57,21 +61,53 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
 
     final shouldSave = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("End Session?"),
-        content: Text(
-          "You have practiced for ${_formatDuration(_durationSeconds)}. Save this session?",
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.help_outline_rounded, color: AppThemes.accentPurple, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  "End Session?",
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "You have practiced for ${_formatDuration(_durationSeconds)}. Save this session?",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("DISCARD", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppThemes.accentPurple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text("SAVE", style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Discard"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Save"),
-          ),
-        ],
       ),
     );
 
@@ -84,6 +120,9 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
       );
 
       await YogaDatabaseHelper.instance.createSession(session);
+
+      // Add XP
+      bool leveledUp = await GamificationService.instance.addYogaXP(_durationSeconds ~/ 60);
 
       List<AchievementModel> newlyUnlocked = [];
       // Check for achievements
@@ -98,13 +137,18 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
           const SnackBar(content: Text("Session saved successfully!")),
         );
 
-        // Pop the session screen first to prevent accidental dialog dismissal
+        // Pop the session screen first 
         Navigator.pop(context, true);
 
         // Refresh dashboard stats
         DashboardScreen.triggerRefresh();
 
-        // Show celebrations on the root navigator (handled inside show)
+        // Level Up Celebration
+        if (leveledUp) {
+          _showLevelUpCelebration();
+        }
+
+        // Show achievements
         if (newlyUnlocked.isNotEmpty) {
           for (var achievement in newlyUnlocked) {
             AchievementUnlockDialog.show(context, achievement);
@@ -116,40 +160,110 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
     }
   }
 
+  void _showLevelUpCelebration() async {
+    final xp = await GamificationService.instance.getTotalXP();
+    final level = GamificationService.instance.getLevelForXP(xp);
+    final title = GamificationService.instance.getLevelTitle(level);
+    final tierColor = GamificationService.instance.getTierColor(level);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.stars_rounded, color: tierColor, size: 80),
+                const SizedBox(height: 16),
+                Text(
+                  "LEVEL UP!",
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: tierColor,
+                        letterSpacing: 2,
+                      ),
+                ),
+                Text(
+                  "NEW RANK: ${title.toUpperCase()}",
+                  style: TextStyle(
+                    color: tierColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "You've reached a new level of fitness. Keep pushing your limits!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppThemes.accentPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text("CONTINUE", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.sessionTitle,
-          style: TextStyle(
-            color: Colors.purple.shade900,
+          style: const TextStyle(
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.purple.shade900),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.purple.shade50,
-              Colors.blue.shade50,
-              Colors.pink.shade50,
-            ],
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Background Gradient Glow
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppThemes.accentPurple.withOpacity(0.2),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                 // Yoga pose image
                 Container(
                   height: 250,
@@ -177,7 +291,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                   "Current Pose: Tadasana",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple.shade900,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -185,32 +299,24 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                   "Focus on your breathing (Pranayama)",
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
+                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
-                // Timer display with card background
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                // Timer display with GlassCard
+                GlassCard(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 20,
+                    ),
+                    child: Text(
+                      _formatDuration(_durationSeconds),
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        fontFeatures: [const FontFeature.tabularFigures()],
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 2,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    _formatDuration(_durationSeconds),
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      fontFeatures: [const FontFeature.tabularFigures()],
-                      fontWeight: FontWeight.bold,
-                      color: Colors.purple.shade700,
                     ),
                   ),
                 ),
@@ -221,20 +327,34 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                     FloatingActionButton.large(
                       heroTag: "play",
                       onPressed: _toggleTimer,
+                      elevation: 0,
                       backgroundColor: _isPlaying
-                          ? Colors.orange
-                          : Colors.green,
+                          ? Colors.orange.withOpacity(0.2)
+                          : Colors.green.withOpacity(0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        side: BorderSide(
+                          color: _isPlaying ? Colors.orange : Colors.green,
+                          width: 2,
+                        ),
+                      ),
                       child: Icon(
-                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                        size: 36,
+                        _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        size: 40,
+                        color: _isPlaying ? Colors.orange : Colors.green,
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 24),
                     FloatingActionButton.large(
                       heroTag: "stop",
                       onPressed: _endSession,
-                      backgroundColor: Colors.red,
-                      child: const Icon(Icons.stop, size: 36),
+                      elevation: 0,
+                      backgroundColor: Colors.red.withOpacity(0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        side: const BorderSide(color: Colors.red, width: 2),
+                      ),
+                      child: const Icon(Icons.stop_rounded, size: 40, color: Colors.red),
                     ),
                   ],
                 ),
@@ -242,9 +362,10 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 
   String _formatDuration(int seconds) {
     final m = seconds ~/ 60;

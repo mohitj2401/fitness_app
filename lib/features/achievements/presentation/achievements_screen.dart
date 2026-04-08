@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
 import '../data/achievement_db_helper.dart';
 import '../models/achievement_model.dart';
 
@@ -57,26 +59,47 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Achievements")),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: _achievements.length,
-              itemBuilder: (context, index) {
-                final achievement = _achievements[index];
-                return _AchievementCard(
-                  achievement: achievement,
-                  icon: _getIcon(achievement.iconName),
-                );
-              },
+      backgroundColor: Colors.black,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: true,
+            pinned: true,
+            backgroundColor: Colors.black,
+            surfaceTintColor: Colors.transparent,
+            title: const Text(
+              "Achievements",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
             ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            sliver: _isLoading
+                ? const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.82,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final achievement = _achievements[index];
+                        return _AchievementCard(
+                          achievement: achievement,
+                          icon: _getIcon(achievement.iconName),
+                        );
+                      },
+                      childCount: _achievements.length,
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -90,64 +113,56 @@ class _AchievementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUnlocked = achievement.isUnlocked;
-    final color = isUnlocked ? Colors.purple : Colors.grey;
+    final color = isUnlocked ? AppThemes.accentPurple : Colors.white.withValues(alpha: 0.2);
 
-    return Card(
-      elevation: isUnlocked ? 4 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: isUnlocked
-            ? BorderSide(color: Colors.purple.withOpacity(0.5), width: 2)
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: color),
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 24,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 36, color: color),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            achievement.title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isUnlocked ? Colors.white : Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            achievement.description,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              color: isUnlocked ? Colors.white.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.2),
+            ),
+          ),
+          if (isUnlocked && achievement.unlockedAt != null) ...[
             const SizedBox(height: 12),
             Text(
-              achievement.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
+              "UNLOCKED ${DateFormat('MMM d').format(achievement.unlockedAt!)}".toUpperCase(),
+              style: const TextStyle(
+                fontSize: 9,
+                color: AppThemes.accentPurple,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: isUnlocked
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.4),
+                letterSpacing: 1,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              achievement.description,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: isUnlocked
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.7)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
-            if (isUnlocked && achievement.unlockedAt != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                "Unlocked ${DateFormat.yMMMd().format(achievement.unlockedAt!)}",
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.purple,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }

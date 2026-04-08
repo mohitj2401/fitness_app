@@ -16,12 +16,21 @@ A modern, feature-rich fitness application built with Flutter, featuring integra
 - **History View**: Detailed logs of past workouts with set-by-set breakdown.
 - **Muscle Focused**: Exercises categorized by Back, Chest, Core, Legs, and more.
 
+### 🏆 Gamification & Mastery (v3)
+- **Intelligent XP Engine**: Dynamic XP rewards based on workout intensity (sets) and yoga duration (minutes).
+- **Mastery Path**: High-end visual "roadmap" of 6 prestige ranks: Novice, Athlete, Warrior, Elite, Master, and Legend.
+- **Tiered Branding**: Signature colors and badges for each rank (Iron to Diamond) integrated across the dashboard and session screens.
+- **Interactive Map**: Tap the Level HUD to explore the full Mastery Path and requirements.
+- **Streak Tracker**: Integrated fire-streak tracking with dashboard HUD to encourage daily consistency.
+
 ### 🧘 Yoga & Mindfulness
 - **Guided Sessions**: Categories for Asanas, Pranayama, Meditation, and Surya Namaskar.
 - **Smart Timer**: Persistent session timer with tracking for yoga intensity.
+- **AMOLED UX**: Optimized dark-mode visuals for a focused, premium session experience.
 - **SQL-Backed History**: Reliable storage for all yoga mindfulness sessions.
 
 ### 🔄 Real-Time Dashboard
+- **Unified HUD**: Glassmorphism progress bar with dynamic Level and Mastery Rank display.
 - **Unified Stats**: Live synchronization across Home and Account tabs.
 - **Stat Cards**: Track Sessions, Total Minutes, Calories, and Badges earned.
 - **Quick Links**: Instant access to workouts, yoga, history, and achievements.
