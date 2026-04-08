@@ -5,9 +5,31 @@ import '../../../workout/presentation/exercise_list_screen.dart';
 import '../../../workout/models/exercise_model.dart';
 import '../../../workout/presentation/exercise_timer_screen.dart';
 import '../../../workout/data/exercise_repository.dart';
+import '../../../yoga/data/yoga_db_helper.dart';
+import '../../../yoga/presentation/yoga_screen.dart';
 
-class WorkoutsLibraryScreen extends StatelessWidget {
+class WorkoutsLibraryScreen extends StatefulWidget {
   const WorkoutsLibraryScreen({super.key});
+
+  @override
+  State<WorkoutsLibraryScreen> createState() => _WorkoutsLibraryScreenState();
+}
+
+class _WorkoutsLibraryScreenState extends State<WorkoutsLibraryScreen> {
+  int _yogaCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadYogaCount();
+  }
+
+  Future<void> _loadYogaCount() async {
+    final count = await YogaDatabaseHelper.instance.getSessionCount();
+    if (mounted) {
+      setState(() => _yogaCount = count.toInt());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +120,20 @@ class WorkoutsLibraryScreen extends StatelessWidget {
                           categoryName: "Arms & Core",
                           categories: [ExerciseCategory.arms, ExerciseCategory.core],
                         ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCategoryCard(
+                    context,
+                    title: "Yoga & Mindfulness",
+                    count: "$_yogaCount Sessions",
+                    image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400",
+                    color: Colors.purpleAccent,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const YogaScreen(),
                       ),
                     ),
                   ),

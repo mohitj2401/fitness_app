@@ -13,6 +13,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/widgets/glass_card.dart';
 import '../../core/services/gamification_service.dart';
 import '../../core/services/streak_service.dart';
+import '../yoga/models/yoga_session_model.dart';
+import '../yoga/presentation/yoga_screen.dart';
 
 
 // New UI Components
@@ -140,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentLevel = 1;
   double _levelProgress = 0.0;
   int _streak = 0;
-  List<WorkoutSession> _recentWorkouts = [];
+  List<dynamic> _recentActivity = []; // Mixed Gym and Yoga
   bool _isLoading = true;
 
   @override
@@ -171,21 +173,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final gymSeconds = await WorkoutDatabaseHelper.instance.getTotalDuration();
     final yogaSeconds = await YogaDatabaseHelper.instance.getTotalDuration();
-    final recent = await WorkoutDatabaseHelper.instance.getAllWorkoutSessions();
+    
+    // Fetch and merge activities
+    final recentGym = await WorkoutDatabaseHelper.instance.getAllWorkoutSessions();
+    final recentYoga = await YogaDatabaseHelper.instance.getAllSessions();
 
     if (mounted) {
       setState(() {
         _dailySessions = gymToday + yogaToday;
         _weeklySessions = gymWeek + yogaWeek;
         
-    final totalSeconds = gymSeconds + yogaSeconds;
-        // More precise calorie calculation (approx 5 cal per minute)
+        final totalSeconds = gymSeconds + yogaSeconds;
         _caloriesBurned = ((totalSeconds / 60) * 5).toInt(); 
-        _recentWorkouts = recent.take(5).toList();
         
-        // Load XP and Level data
+        // Merge and sort by date (most recent first)
+        _recentActivity = [...recentGym, ...recentYoga]
+          ..sort((a, b) {
+            final dateA = a is WorkoutSession ? a.startTime : (a as YogaSessionModel).timestamp;
+            final dateB = b is WorkoutSession ? b.startTime : (b as YogaSessionModel).timestamp;
+            return dateB.compareTo(dateA);
+          });
+        _recentActivity = _recentActivity.take(5).toList();
+        
         _loadGamificationData();
-        
         _isLoading = false;
       });
     }
@@ -534,6 +544,56 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 24),
+                        // Yoga Quick Access
+                        InkWell(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const YogaScreen()),
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          child: GlassCard(
+                            padding: const EdgeInsets.all(20),
+                            gradientColors: [
+                              Colors.blueAccent.withValues(alpha: 0.1),
+                              Colors.purpleAccent.withValues(alpha: 0.1),
+                            ],
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purpleAccent.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.self_improvement_rounded, color: Colors.purpleAccent),
+                                ),
+                                const SizedBox(width: 20),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "YOGA & MINDFULNESS",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      Text(
+                                        "Find your center. Start a practice.",
+                                        style: TextStyle(color: Colors.grey, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.arrow_forward_ios, color: Colors.white.withValues(alpha: 0.3), size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -568,7 +628,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 12),
                         SizedBox(
                           height: 180,
-                          child: _recentWorkouts.isEmpty
+                          child: _recentActivity.isEmpty
                               ? Center(
                                   child: Text(
                                     "No workouts yet. Start one today!",
@@ -577,16 +637,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : ListView.builder(
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: _recentWorkouts.length,
+                                  itemCount: _recentActivity.length,
                                   itemBuilder: (context, index) {
-                                    final session = _recentWorkouts[index];
+                                    final item = _recentActivity[index];
+                                    final bool isYoga = item is! WorkoutSession;
+                                    
+                                    final String title = isYoga ? item.title : item.name;
+                                    final int duration = isYoga ? item.durationSeconds : item.durationSeconds;
+                                    final IconData icon = isYoga ? Icons.self_improvement_rounded : Icons.history;
+
                                     return Padding(
                                       padding: const EdgeInsets.only(right: 16),
                                       child: FeaturedWorkoutCard(
-                                        title: session.name,
-                                        duration: "${(session.durationSeconds / 60).floor()} min",
-                                        calories: "${(session.durationSeconds / 60 * 5).floor()} kcal",
-                                        icon: Icons.history,
+                                        title: title,
+                                        duration: "${(duration / 60).floor()} min",
+                                        calories: "${(duration / 60 * 5).floor()} kcal",
+                                        icon: icon,
                                       ),
                                     );
                                   },

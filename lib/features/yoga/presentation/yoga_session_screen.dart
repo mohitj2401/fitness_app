@@ -24,6 +24,35 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
   bool _isPlaying = false;
   int _durationSeconds = 0;
   Timer? _timer;
+
+  Map<String, String> get _sessionData {
+    switch (widget.sessionTitle) {
+      case 'Pranayama':
+        return {
+          'pose': 'Sukhasana',
+          'image': 'assets/images/yoga/categories/pranayama.png',
+          'focus': 'Focus on your breathing (Pranayama)',
+        };
+      case 'Meditation':
+        return {
+          'pose': 'Dhyana',
+          'image': 'assets/images/yoga/categories/meditation.png',
+          'focus': 'Focus on your mindfulness (Meditation)',
+        };
+      case 'Surya Namaskar':
+        return {
+          'pose': 'Surya Namaskar',
+          'image': 'assets/images/yoga/categories/surya_namaskar.png',
+          'focus': 'Follow the flow of the sun.',
+        };
+      default:
+        return {
+          'pose': 'Tadasana',
+          'image': 'assets/images/yoga/poses/tadasana.png',
+          'focus': 'Focus on your posture and breath.',
+        };
+    }
+  }
   // Removed YogaStorageService
 
   @override
@@ -63,48 +92,72 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Center(
-        child: GlassCard(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.help_outline_rounded, color: AppThemes.accentPurple, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  "End Session?",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "You have practiced for ${_formatDuration(_durationSeconds)}. Save this session?",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 24),
-                Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Material(
+            color: Colors.transparent,
+            child: GlassCard(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text("DISCARD", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    const Icon(Icons.help_outline_rounded, color: AppThemes.accentPurple, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      "End Session?",
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "You have practiced for ${_formatDuration(_durationSeconds)}.\nSave this session to your history?",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 14,
+                        height: 1.5,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppThemes.accentPurple,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(
+                              "DISCARD",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: const Text("SAVE", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppThemes.accentPurple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: const Text(
+                              "SAVE SESSION",
+                              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -172,10 +225,14 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => Center(
-        child: GlassCard(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Material(
+            color: Colors.transparent,
+            child: GlassCard(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.stars_rounded, color: tierColor, size: 80),
@@ -219,7 +276,9 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   @override
@@ -281,14 +340,14 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
-                      "assets/images/yoga/poses/tadasana.png",
+                      _sessionData['image']!,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  "Current Pose: Tadasana",
+                  "Current Pose: ${_sessionData['pose']}",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -296,7 +355,7 @@ class _YogaSessionScreenState extends State<YogaSessionScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Focus on your breathing (Pranayama)",
+                  _sessionData['focus']!,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
