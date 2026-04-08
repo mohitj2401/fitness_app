@@ -10,30 +10,32 @@ A modern, feature-rich fitness application built with Flutter, featuring integra
 - **Celebratory UI**: Animated unlock dialogs with custom icons.
 - **Progress Tracking**: Persistent badge grid with unlock dates.
 
+### 🏆 Gamification & Mastery (v3.1)
+- **Unified Activity Feed**: Intelligent dashboard timeline that automatically merges and sorts Gym workouts and Yoga practices by date.
+- **Intelligent XP Engine**: Dynamic XP rewards based on workout intensity (sets) and yoga duration (minutes), persisted via `SharedPreferences`.
+- **Mastery Path**: High-end visual "roadmap" of 6 prestige ranks: Novice, Athlete, Warrior, Elite, Master, and Legend.
+- **Tiered Branding**: Signature colors and badges for each rank (Iron to Diamond) integrated across the dashboard HUD and session screens.
+- **Interactive Map**: Tap the Level HUD to explore the full Mastery Path, requirements, and rank titles.
+
 ### 💪 Gym Workout Tracking
-- **Session Logging**: Track start/end times and duration.
+- **Session Logging**: Track start/end times and duration with automatic XP calculation.
 - **Exercise Logging**: Log sets, reps, and weights for 18+ exercises.
 - **History View**: Detailed logs of past workouts with set-by-set breakdown.
 - **Muscle Focused**: Exercises categorized by Back, Chest, Core, Legs, and more.
 
-### 🏆 Gamification & Mastery (v3)
-- **Intelligent XP Engine**: Dynamic XP rewards based on workout intensity (sets) and yoga duration (minutes).
-- **Mastery Path**: High-end visual "roadmap" of 6 prestige ranks: Novice, Athlete, Warrior, Elite, Master, and Legend.
-- **Tiered Branding**: Signature colors and badges for each rank (Iron to Diamond) integrated across the dashboard and session screens.
-- **Interactive Map**: Tap the Level HUD to explore the full Mastery Path and requirements.
-- **Streak Tracker**: Integrated fire-streak tracking with dashboard HUD to encourage daily consistency.
-
 ### 🧘 Yoga & Mindfulness
-- **Guided Sessions**: Categories for Asanas, Pranayama, Meditation, and Surya Namaskar.
-- **Smart Timer**: Persistent session timer with tracking for yoga intensity.
+- **Dynamic Session Engine**: Context-aware activity screen that automatically shifts images, poses (e.g., Tadasana, Dhyana), and focus instructions based on the selected discipline.
+- **Guided Categories**: Dedicated sessions for Asanas, Pranayama, Meditation, and Surya Namaskar.
+- **Restored Navigation**: Multi-point access via the **Workouts Library** and a high-speed **Home HUD Shortcut**.
+- **Smart Timer**: Persistent session timer with tracking for yoga intensity and mindful duration.
 - **AMOLED UX**: Optimized dark-mode visuals for a focused, premium session experience.
-- **SQL-Backed History**: Reliable storage for all yoga mindfulness sessions.
+- **SQL-Backed History**: Reliable SQLite storage for all yoga mindfulness sessions.
 
 ### 🔄 Real-Time Dashboard
-- **Unified HUD**: Glassmorphism progress bar with dynamic Level and Mastery Rank display.
-- **Unified Stats**: Live synchronization across Home and Account tabs.
+- **Unified HUD**: Glassmorphism progress bar with dynamic Level, XP, and Mastery Rank display.
+- **Unified Stats**: Live synchronization across Home, Progress, and Library tabs.
 - **Stat Cards**: Track Sessions, Total Minutes, Calories, and Badges earned.
-- **Quick Links**: Instant access to workouts, yoga, history, and achievements.
+- **Navigation HUB**: 4-tab premium navigation (Home, Progress, Library, Profile).
 
 ### 👤 Profile & System Tools
 - **Theme Engine**: Switch between Light, Dark, and AMOLED (OLED-friendly) modes.
