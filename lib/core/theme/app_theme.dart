@@ -100,4 +100,10 @@ class AppThemes {
         return amoledTheme;
     }
   }
+
+  // --- Premium Design Tokens ---
+  static const Color accentPurple = Color(0xFF8B5CF6);
+  static const Color accentMagenta = Color(0xFFD946EF);
+  static const Color glassBackground = Color(0x33FFFFFF);
+  static const Color glassBorder = Color(0x66FFFFFF);
 }

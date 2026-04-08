@@ -1,7 +1,9 @@
-import '../data/yoga_db_helper.dart';
-import '../models/yoga_session_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/glass_card.dart';
+import '../data/yoga_db_helper.dart';
+import '../models/yoga_session_model.dart';
 import 'yoga_session_screen.dart';
 import 'yoga_daily_report_screen.dart';
 
@@ -36,76 +38,103 @@ class _YogaScreenState extends State<YogaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Yoga & Mindfulness"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.analytics),
-            tooltip: "Daily Report",
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const YogaDailyReportScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      backgroundColor: Colors.black,
       body: RefreshIndicator(
         onRefresh: _loadHistory,
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionHeader(context, "Categories"),
-              const SizedBox(height: 10),
-              _buildCategoryGrid(context),
-              const SizedBox(height: 20),
-              _buildSectionHeader(context, "Recent Sessions"),
-              const SizedBox(height: 10),
-              if (_isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (_sessions.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Text("No sessions yet. Start your journey!"),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 120,
+              floating: true,
+              pinned: true,
+              backgroundColor: Colors.black,
+              surfaceTintColor: Colors.transparent,
+              title: const Text(
+                "Yoga & Mindfulness",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.analytics_rounded, color: AppThemes.accentPurple),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const YogaDailyReportScreen()),
                   ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _sessions.length > 5
-                      ? 5
-                      : _sessions.length, // Show last 5
-                  itemBuilder: (context, index) {
-                    final session = _sessions[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.self_improvement,
-                          color: Colors.purple,
-                        ),
-                        title: Text(session.title),
-                        subtitle: Text(
-                          "${_formatDuration(session.durationSeconds)} • ${DateFormat.yMMMd().format(session.timestamp)}",
-                        ),
-                        trailing: const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                        ),
-                      ),
-                    );
-                  },
                 ),
-            ],
-          ),
+                const SizedBox(width: 12),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader("Categories"),
+                    const SizedBox(height: 16),
+                    _buildCategoryGrid(context),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Recent Sessions"),
+                    const SizedBox(height: 16),
+                    if (_isLoading)
+                      const Center(child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(),
+                      ))
+                    else if (_sessions.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: Text("Start your journey today", style: TextStyle(color: Colors.grey)),
+                        ),
+                      )
+                    else
+                      ..._sessions.take(5).map((session) => _buildRecentSessionCard(session)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentSessionCard(YogaSessionModel session) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        borderRadius: 20,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.self_improvement_rounded, color: Colors.blueAccent, size: 20),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    session.title,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  Text(
+                    "${_formatDuration(session.durationSeconds)} • ${DateFormat.yMMMd().format(session.timestamp)}",
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 18),
+          ],
         ),
       ),
     );
@@ -118,12 +147,15 @@ class _YogaScreenState extends State<YogaScreen> {
     return "${m}m ${s}s";
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(String title) {
     return Text(
-      title,
-      style: Theme.of(
-        context,
-      ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+      title.toUpperCase(),
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.5,
+      ),
     );
   }
 
@@ -156,19 +188,16 @@ class _YogaScreenState extends State<YogaScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1.5,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final cat = categories[index];
-        return Card(
-          elevation: 4,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+        return GlassCard(
+          padding: EdgeInsets.zero,
+          borderRadius: 20,
           child: InkWell(
             onTap: () async {
               final result = await Navigator.push(

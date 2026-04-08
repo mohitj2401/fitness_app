@@ -153,7 +153,7 @@ class WorkoutScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => ExerciseListScreen(
-                    category: cat['category'] as ExerciseCategory,
+                    categories: [cat['category'] as ExerciseCategory],
                     categoryName: cat['name'] as String,
                   ),
                 ),

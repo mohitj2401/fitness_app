@@ -1,202 +1,60 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/glass_card.dart';
+import '../data/exercise_repository.dart';
 import '../models/exercise_model.dart';
-import '../data/exercise_data.dart';
-import 'exercise_detail_screen.dart';
+import 'exercise_log_screen.dart';
 
-class ExerciseListScreen extends StatefulWidget {
-  final ExerciseCategory category;
+class ExerciseListScreen extends StatelessWidget {
   final String categoryName;
+  final List<ExerciseCategory> categories;
 
   const ExerciseListScreen({
     super.key,
-    required this.category,
     required this.categoryName,
+    required this.categories,
   });
 
   @override
-  State<ExerciseListScreen> createState() => _ExerciseListScreenState();
-}
-
-class _ExerciseListScreenState extends State<ExerciseListScreen> {
-  DifficultyLevel? _selectedDifficulty;
-  String _searchQuery = '';
-
-  List<Exercise> get _filteredExercises {
-    var exercises = ExerciseData.getExercisesByCategory(widget.category);
-
-    if (_selectedDifficulty != null) {
-      exercises = exercises
-          .where((e) => e.difficulty == _selectedDifficulty)
-          .toList();
-    }
-
-    if (_searchQuery.isNotEmpty) {
-      exercises = exercises
-          .where(
-            (e) => e.name.toLowerCase().contains(_searchQuery.toLowerCase()),
-          )
-          .toList();
-    }
-
-    return exercises;
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final List<Exercise> exercises = [];
+    for (var cat in categories) {
+      exercises.addAll(ExerciseRepository.getExercisesByCategory(cat));
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.categoryName} Exercises'),
-        actions: [
-          PopupMenuButton<DifficultyLevel?>(
-            icon: const Icon(Icons.filter_list),
-            onSelected: (value) {
-              setState(() {
-                _selectedDifficulty = value;
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: null, child: Text('All Levels')),
-              const PopupMenuItem(
-                value: DifficultyLevel.beginner,
-                child: Text('Beginner'),
-              ),
-              const PopupMenuItem(
-                value: DifficultyLevel.intermediate,
-                child: Text('Intermediate'),
-              ),
-              const PopupMenuItem(
-                value: DifficultyLevel.advanced,
-                child: Text('Advanced'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search exercises...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
+      backgroundColor: Colors.black,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: true,
+            pinned: true,
+            backgroundColor: Colors.black,
+            surfaceTintColor: Colors.transparent,
+            title: Text(
+              categoryName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
             ),
           ),
-          // Filter Chips
-          if (_selectedDifficulty != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Chip(
-                    label: Text(_selectedDifficulty!.name),
-                    onDeleted: () {
-                      setState(() {
-                        _selectedDifficulty = null;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          // Exercise List
-          Expanded(
-            child: _filteredExercises.isEmpty
-                ? const Center(child: Text('No exercises found'))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredExercises.length,
-                    itemBuilder: (context, index) {
-                      final exercise = _filteredExercises[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          leading: CircleAvatar(
-                            radius: 30,
-                            backgroundColor: exercise.color.withValues(
-                              alpha: 0.2,
-                            ),
-                            child: Icon(
-                              exercise.icon,
-                              color: exercise.color,
-                              size: 30,
-                            ),
-                          ),
-                          title: Text(
-                            exercise.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(
-                                exercise.muscleGroups.join(', '),
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getDifficultyColor(
-                                        exercise.difficulty,
-                                      ).withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      exercise.difficultyText,
-                                      style: TextStyle(
-                                        color: _getDifficultyColor(
-                                          exercise.difficulty,
-                                        ),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ExerciseDetailScreen(exercise: exercise),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            sliver: exercises.isEmpty
+                ? const SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(48.0),
+                        child: Text("Coming Soon!", style: TextStyle(color: Colors.grey)),
+                      ),
+                    ),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final exercise = exercises[index];
+                        return _buildExerciseCard(context, exercise);
+                      },
+                      childCount: exercises.length,
+                    ),
                   ),
           ),
         ],
@@ -204,14 +62,63 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
     );
   }
 
-  Color _getDifficultyColor(DifficultyLevel difficulty) {
-    switch (difficulty) {
-      case DifficultyLevel.beginner:
-        return Colors.green;
-      case DifficultyLevel.intermediate:
-        return Colors.orange;
-      case DifficultyLevel.advanced:
-        return Colors.red;
-    }
+  Widget _buildExerciseCard(BuildContext context, Exercise exercise) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        borderRadius: 24,
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ExerciseLogScreen(
+                exercise: exercise,
+                durationSeconds: 0,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: exercise.color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(exercise.icon, color: exercise.color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      exercise.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "${exercise.difficultyText.toUpperCase()} • ${exercise.muscleGroups.join(', ')}",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Colors.white.withValues(alpha: 0.2)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

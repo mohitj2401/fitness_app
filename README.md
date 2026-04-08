@@ -1,151 +1,94 @@
 # Fitness Pass App
 
-A modern, feature-rich fitness application built with Flutter, featuring yoga sessions, workout exercises, and booking capabilities.
+A modern, feature-rich fitness application built with Flutter, featuring integrated workout tracking, yoga sessions, and a comprehensive achievements system.
 
-## Features
+## 🚀 Key Features
+
+### 🏅 Achievements System (v2)
+- **11 Unique Milestones** across categories like consistency, intensity, and timing.
+- **Milestones include**: Century Club (100 sessions), Calorie Crusher, Early Bird (pre-8 AM), and Night Owl (post-9 PM).
+- **Celebratory UI**: Animated unlock dialogs with custom icons.
+- **Progress Tracking**: Persistent badge grid with unlock dates.
+
+### 💪 Gym Workout Tracking
+- **Session Logging**: Track start/end times and duration.
+- **Exercise Logging**: Log sets, reps, and weights for 18+ exercises.
+- **History View**: Detailed logs of past workouts with set-by-set breakdown.
+- **Muscle Focused**: Exercises categorized by Back, Chest, Core, Legs, and more.
+
+### 🏆 Gamification & Mastery (v3)
+- **Intelligent XP Engine**: Dynamic XP rewards based on workout intensity (sets) and yoga duration (minutes).
+- **Mastery Path**: High-end visual "roadmap" of 6 prestige ranks: Novice, Athlete, Warrior, Elite, Master, and Legend.
+- **Tiered Branding**: Signature colors and badges for each rank (Iron to Diamond) integrated across the dashboard and session screens.
+- **Interactive Map**: Tap the Level HUD to explore the full Mastery Path and requirements.
+- **Streak Tracker**: Integrated fire-streak tracking with dashboard HUD to encourage daily consistency.
 
 ### 🧘 Yoga & Mindfulness
-- Multiple yoga categories (Asanas, Pranayama, Meditation, Surya Namaskar)
-- Session timer with pause/resume functionality
-- Session history tracking with local storage
-- Daily reports and statistics
-- Beautiful gradient UI with realistic yoga images
+- **Guided Sessions**: Categories for Asanas, Pranayama, Meditation, and Surya Namaskar.
+- **Smart Timer**: Persistent session timer with tracking for yoga intensity.
+- **AMOLED UX**: Optimized dark-mode visuals for a focused, premium session experience.
+- **SQL-Backed History**: Reliable storage for all yoga mindfulness sessions.
 
-### 💪 Workout Exercises
-- **18 Exercises** across 6 categories:
-  - Chest (Bench Press, Push-Ups, Dumbbell Flyes)
-  - Back (Pull-Ups, Barbell Rows, Deadlifts)
-  - Legs (Squats, Lunges, Leg Press)
-  - Shoulders (Overhead Press, Lateral Raises, Front Raises)
-  - Arms (Barbell Curls, Tricep Dips, Hammer Curls)
-  - Core (Plank, Crunches, Russian Twists)
-- Search and filter by difficulty level
-- Detailed exercise instructions with step-by-step guidance
-- Muscle group targeting information
-- Color-coded categories
+### 🔄 Real-Time Dashboard
+- **Unified HUD**: Glassmorphism progress bar with dynamic Level and Mastery Rank display.
+- **Unified Stats**: Live synchronization across Home and Account tabs.
+- **Stat Cards**: Track Sessions, Total Minutes, Calories, and Badges earned.
+- **Quick Links**: Instant access to workouts, yoga, history, and achievements.
 
-### 🏠 Modern Dashboard
-- Gradient header with welcome message
-- Stats cards (Workouts, Calories, Streak)
-- Quick action cards for main features
-- Recent activity feed
-- Material 3 design with smooth animations
+### 👤 Profile & System Tools
+- **Theme Engine**: Switch between Light, Dark, and AMOLED (OLED-friendly) modes.
+- **Data Privacy**: "Reset All Data" feature to securely wipe progress and start fresh.
+- **State Management**: Robust BLoC-based theme and sync management.
 
-### 👤 Profile & Settings
-- User profile with gradient header
-- Stats overview (Sessions, Time, Achievements)
-- Theme switcher (Light, Dark, AMOLED)
-- Modern card-based settings layout
-
-### 📅 Booking
-- Class booking functionality
-- Schedule management
-
-## Tech Stack
+## 🛠 Tech Stack
 
 - **Framework:** Flutter 3.10+
 - **State Management:** flutter_bloc
-- **Local Storage:** shared_preferences
-- **Fonts:** Google Fonts (Inter)
-- **Design:** Material 3
+- **Database:** SQLite (sqflite) for high-performance session and achievement storage.
+- **Synchronization:** Custom ValueNotifier-based dashboard refresh system.
+- **UI Design:** Material 3 with custom glassmorphism and gradient aesthetics.
 
-## Dependencies
+## 📦 Dependencies
 
 ```yaml
 dependencies:
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.8
-  shared_preferences: ^2.5.4
-  google_fonts: ^7.0.0
+  sqflite: ^2.4.1
+  path: ^1.9.1
   intl: ^0.20.2
-  table_calendar: ^3.2.0
   uuid: ^4.5.2
+  google_fonts: ^7.0.0
+  shared_preferences: ^2.5.4
 ```
 
-## Getting Started
-
-### Prerequisites
-- Flutter SDK 3.10.1 or higher
-- Dart SDK
-- Android Studio / VS Code with Flutter extensions
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/fitness_pass_app.git
-cd fitness_pass_app
-```
-
-2. Install dependencies:
-```bash
-flutter pub get
-```
-
-3. Run the app:
-```bash
-flutter run
-```
-
-## Project Structure
+## 📂 Project Structure
 
 ```
 lib/
 ├── core/
-│   └── theme/
-│       ├── app_theme.dart
-│       └── theme_bloc.dart
+│   └── theme/            # ThemeBloc and AppTheme
 ├── features/
-│   ├── dashboard/
-│   │   └── dashboard_screen.dart
-│   ├── yoga/
-│   │   ├── models/
-│   │   ├── data/
-│   │   └── presentation/
-│   ├── workout/
-│   │   ├── models/
-│   │   ├── data/
-│   │   └── presentation/
-│   ├── booking/
-│   │   └── booking_screen.dart
-│   └── auth/
-└── main.dart
+│   ├── dashboard/       # Main Dashboard & Home screens
+│   ├── achievements/    # Achievement logic, models, and UI
+│   ├── workout/         # Gym logging and exercise database
+│   ├── yoga/            # Yoga session tracking
+│   └── booking/         # Class booking module
+└── main.dart            # App entry & Global Navigator setup
 ```
 
-## Features in Detail
+## 🏁 Getting Started
 
-### Yoga Sessions
-- Track yoga practice with built-in timer
-- Save sessions with title, duration, and timestamp
-- View session history
-- Daily reports with statistics
-
-### Workout Exercises
-- Browse exercises by category
-- Search exercises by name
-- Filter by difficulty (Beginner/Intermediate/Advanced)
-- View detailed instructions for each exercise
-- Learn about targeted muscle groups
-
-### Themes
-- **Light Mode:** Clean, modern light theme
-- **Dark Mode:** Eye-friendly dark theme
-- **AMOLED Mode:** Pure black for OLED displays
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Flutter team for the amazing framework
-- Material Design for design guidelines
-- Google Fonts for typography
+1. **Clone & Install**:
+   ```bash
+   git clone https://github.com/mohitj2401/fitness_app.git
+   cd fitness_pass_app
+   flutter pub get
+   ```
+2. **Run the App**:
+   ```bash
+   flutter run
+   ```
 
 ---
 
-**Built with ❤️ using Flutter**
+**Built with ❤️ for Fitness Enthusiasts**
